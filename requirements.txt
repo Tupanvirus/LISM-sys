@@ -2,4 +2,4 @@ streamlit
 datetime
 supabase
 qrcode
-io
+
