@@ -8,7 +8,7 @@ import io
 SUPABASE_URL = st.secrets[SUPABASE_URL]
 SUPABASE_KEY = st.secrets[SUPABASE_KEY]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
+st.write(st.secrets)
 # Функции ГОСТ
 def calculate_samples(total_tanks: int) -> int:
     return max(2, total_tanks // 4)
