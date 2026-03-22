@@ -1,5 +1,5 @@
 streamlit
-datatime
+datetime
 supabase
 qrcode
 io
