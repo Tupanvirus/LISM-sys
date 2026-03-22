@@ -38,7 +38,7 @@ def generate_qr(sample_data: dict) -> bytes:
     return buf
 
 #Streamlit UI
-st.title("ЛИС для нефтебазы)")
+st.title("ЛИС для нефтебазы")
 
 train = st.text_input("Номер состава", help="Например 2456-789-01")
 tank = st.text_input("Номер цистерны", help="8 цифр")
