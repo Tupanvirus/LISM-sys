@@ -155,7 +155,8 @@ if st.button("Создать и оценить пробу"):
                 "issues": ", ".join(issues),
                 "date": datetime.now().isoformat()
             }
-
+            st.session_state.sample_data = sample_data
+            st.session_state.issues = issues
             # Сохраняем в Supabase
             supabase.table("samples").insert(sample_data).execute()
 
@@ -165,39 +166,19 @@ if st.button("Создать и оценить пробу"):
             st.download_button("Скачать QR", qr_buf, file_name=f"QR_{sample_number}.png")
 
             # PDF
-def create_pdf_bytes(sample_data, issues):
-    pdf = FPDF()
-    pdf.add_page() 
-    pdf.set_font("Arial", "B", 16) #Заголовок
-    pdf.cell(0, 10, f"Протокол пробы №{sample_data.get('sample_number','')}", ln=True, align="C")
-    pdf.ln(5)
-    pdf.set_font("Arial", "", 12)# Данные пробы
-    for key, value in sample_data.items():
-        pdf.multi_cell(0, 8, f"{key}: {value}")
-    # Проблемы / отклонения
-    if issues:
-        pdf.ln(5)
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, "Обнаруженные проблемы / отклонения:", ln=True)
-        pdf.set_font("Arial", "", 12)
-        for issue in issues:
-            pdf.multi_cell(0, 8, f"- {issue}")
-    # Сохраняем в байтовый буфер
-    buf = io.BytesIO()
-    pdf_output = pdf.output(dest='S').encode('latin1')  # dest='S' возвращает PDF как строку
-    buf.write(pdf_output)
-    buf.seek(0)
+if st.session_state.sample_data:
+    if st.button("Сгенерировать PDF"):
+        pdf = create_pdf_bytes(
+            st.session_state.sample_data,
+            st.session_state.issues
+        )
 
-    return buf
-if st.button("Сгенерировать PDF"):
-    pdf_bytes = create_pdf_bytes(sample_data, issues)
-    st.download_button(
-        label="Скачать PDF протокол",
-        data=pdf_bytes,
-        file_name=f"Протокол_{sample_data.get('sample_number')}.pdf",
-        mime="application/pdf"
-    )
-
+        st.download_button(
+            "Скачать PDF",
+            pdf,
+            file_name=f"protocol_{st.session_state.sample_data['sample_number']}.pdf",
+            mime="application/pdf"
+        )
 # Дэшборд
 st.header("Дэшборд по пробам")
 all_samples = supabase.table("samples").select("*").execute()
