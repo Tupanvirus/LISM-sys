@@ -182,6 +182,3 @@ if all_samples.data:
     st.dataframe(all_samples.data)
 else:
     st.info("В базе нет данных")
-    st.dataframe(all_samples.data)
-else:
-    st.info("В базе нет данных")
