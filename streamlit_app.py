@@ -3,8 +3,8 @@ from datetime import datetime
 from supabase import create_client, Client
 import qrcode
 import io
-import pdfkit
 import tempfile
+from fpdf import FPDF
 
 # Настройки Supabase
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -165,15 +165,19 @@ if st.button("Создать и оценить пробу"):
             st.download_button("Скачать QR", qr_buf, file_name=f"QR_{sample_number}.png")
 
             # PDF
-            pdf_bytes = create_pdf_html(sample_data, issues)
-            st.download_button("Скачать PDF протокол", pdf_bytes, file_name=f"Protocol_{sample_number}.pdf")
-
-            if decision == "ГОДНА":
-                st.success("Нефть соответствует требованиям")
-            elif decision == "УСЛОВНО ГОДНА":
-                st.warning("Есть отклонения")
-            else:
-                st.error("Нефть требует доработки")
+def create_pdf_bytes(sample_data, issues):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, f"Протокол пробы №{sample_data['sample_number']}", ln=True)
+    pdf.set_font("Arial", "", 12)
+    for k, v in sample_data.items():
+        pdf.cell(0, 8, f"{k}: {v}", ln=True)
+    pdf.cell(0, 8, f"Проблемы: {issues}", ln=True)
+    buf = io.BytesIO()
+    pdf.output(buf)
+    buf.seek(0)
+    return buf
 
 # Дэшборд
 st.header("Дэшборд по пробам")
