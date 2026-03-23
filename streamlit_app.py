@@ -6,12 +6,16 @@ import io
 import pdfkit
 import tempfile
 
+# ===============================
 # Настройки Supabase
+# ===============================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# ===============================
 # Нормативы качества нефти
+# ===============================
 LIMITS = {
     "density_min": 700,
     "density_max": 1000,
@@ -38,7 +42,7 @@ def evaluate_sample(params):
     if params["mechanical"] > LIMITS["mechanical_max"]:
         issues.append("Присутствуют механические примеси")
     if params["salt"] > LIMITS["salt_max"]:
-        issues.append("Присутствуют соли выше нормы")
+        issues.append("Содержание солей выше нормы")
     if params["sulfur"] > LIMITS["sulfur_max"]:
         issues.append("Содержание серы выше нормы")
     if params["flash_point"] < LIMITS["flash_point_min"]:
@@ -56,7 +60,9 @@ def evaluate_sample(params):
 
     return decision, issues
 
+# ===============================
 # QR Генерация
+# ===============================
 def generate_qr(sample_data: dict) -> bytes:
     qr = qrcode.QRCode(box_size=4, border=1)
     qr.add_data(str(sample_data))
@@ -67,7 +73,9 @@ def generate_qr(sample_data: dict) -> bytes:
     buf.seek(0)
     return buf
 
+# ===============================
 # PDF через pdfkit (HTML)
+# ===============================
 def create_pdf_html(sample_data, issues):
     html = f"""
     <h2>Протокол лабораторного анализа нефти</h2>
@@ -83,15 +91,16 @@ def create_pdf_html(sample_data, issues):
             html += f"<li>{issue}</li>"
         html += "</ul></li>"
     html += "</ul>"
-    # Сохраняем PDF во временный файл
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
         pdfkit.from_string(html, f.name)
         f.seek(0)
         pdf_bytes = f.read()
     return pdf_bytes
 
+# ===============================
 # UI Streamlit
-st.title("ЛИС для нефтебазы")
+# ===============================
+st.title("ЛИС нефтебазы — проверка качества нефти для Streamlit Cloud")
 
 # Ввод параметров
 train = st.text_input("Номер состава")
@@ -103,7 +112,7 @@ batch = st.text_input("Номер партии")
 operator = st.text_input("ФИО отборщика")
 
 # Показатели нефти
-density = st.number_input("Плотность, кг/м³",)
+density = st.number_input("Плотность, кг/м³", 700.0, 1000.0, 820.0)
 kinematic_viscosity = st.number_input("Кинематическая вязкость, мм²/с")
 dynamic_viscosity = st.number_input("Динамическая вязкость, мПа·с")
 mass_fraction_of_water = st.number_input("Вода, %")
@@ -122,7 +131,7 @@ if st.button("Создать и оценить пробу"):
         mechanical, salt, sulfur, flash_point, boiling_point_min, boiling_point_max
     ]
     if not all(required_fields):
-        st.error("Пожалуйста, заполните все поля!")
+        st.error("Пожалуйста, заполните все обязательные поля!")
     else:
         # Проверка уникальности
         existing = supabase.table("samples").select("id").eq("train_number", train).eq("tank_number", tank).execute()
@@ -172,14 +181,17 @@ if st.button("Создать и оценить пробу"):
             if decision == "ГОДНА":
                 st.success("Нефть соответствует требованиям")
             elif decision == "УСЛОВНО ГОДНА":
-                st.warning("⚠ Есть отклонения")
+                st.warning("Есть отклонения")
             else:
-                st.error("Нефть НЕГОДНА")
+                st.error("Нефть требует доработки")
 
 # Дэшборд
 st.header("Дэшборд по пробам")
 all_samples = supabase.table("samples").select("*").execute()
 if all_samples.data:
+    st.dataframe(all_samples.data)
+else:
+    st.info("В базе нет данных")
     st.dataframe(all_samples.data)
 else:
     st.info("В базе нет данных")
