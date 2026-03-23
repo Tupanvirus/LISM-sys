@@ -6,16 +6,12 @@ import io
 import pdfkit
 import tempfile
 
-# ===============================
 # Настройки Supabase
-# ===============================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ===============================
 # Нормативы качества нефти
-# ===============================
 LIMITS = {
     "density_min": 700,
     "density_max": 1000,
@@ -60,9 +56,7 @@ def evaluate_sample(params):
 
     return decision, issues
 
-# ===============================
 # QR Генерация
-# ===============================
 def generate_qr(sample_data: dict) -> bytes:
     qr = qrcode.QRCode(box_size=4, border=1)
     qr.add_data(str(sample_data))
@@ -73,9 +67,7 @@ def generate_qr(sample_data: dict) -> bytes:
     buf.seek(0)
     return buf
 
-# ===============================
 # PDF через pdfkit (HTML)
-# ===============================
 def create_pdf_html(sample_data, issues):
     html = f"""
     <h2>Протокол лабораторного анализа нефти</h2>
@@ -97,9 +89,7 @@ def create_pdf_html(sample_data, issues):
         pdf_bytes = f.read()
     return pdf_bytes
 
-# ===============================
 # UI Streamlit
-# ===============================
 st.title("ЛИС нефтебазы — проверка качества нефти для Streamlit Cloud")
 
 # Ввод параметров
