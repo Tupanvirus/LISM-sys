@@ -2,4 +2,4 @@ streamlit
 supabase
 qrcode
 Pillow
-pdfkit
+fpdf2
