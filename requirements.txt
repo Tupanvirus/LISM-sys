@@ -1,5 +1,6 @@
 streamlit==1.28.0
 pandas==2.1.0
 numpy==1.26.0
-reportlab
+supabase-py==1.0.0
 qrcode[pil]==7.4.2
+reportlab==4.1.0
