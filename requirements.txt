@@ -1,6 +1,5 @@
-streamlit==1.29.0
-numpy==1.27.5
-supabase-py==1.0.0
-qrcode==7.4.2
-Pillow==10.1.0
-pdfkit==1.0.0
+streamlit
+supabase-py
+qrcode
+Pillow
+pdfkit
