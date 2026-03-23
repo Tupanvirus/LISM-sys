@@ -189,7 +189,7 @@ def create_pdf_bytes(sample_data, issues):
     buf.seek(0)
 
     return buf
-    if st.button("Сгенерировать PDF"):
+if st.button("Сгенерировать PDF"):
     pdf_bytes = create_pdf_bytes(sample_data, issues)
     st.download_button(
         label="Скачать PDF протокол",
