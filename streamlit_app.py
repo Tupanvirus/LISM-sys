@@ -4,16 +4,20 @@ from supabase import create_client, Client
 import qrcode
 import io
 import pandas as pd
+import math
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-import math
 
-# API Supabase
+# ===============================
+# Настройки Supabase
+# ===============================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Функции ГОСТ для расчета времени и кол-ва цистерн для анализа
+# ===============================
+# Функции ГОСТ и логика отбора
+# ===============================
 def calculate_samples(total_tanks: int) -> int:
     return max(2, math.ceil(total_tanks / 4))
 
@@ -31,7 +35,9 @@ def calculate_analysis_time(samples_count: int, heavy_oil: bool = False) -> int:
         base_time += samples_count * 2
     return base_time
 
+# ===============================
 # QR Генерация
+# ===============================
 def generate_qr(sample_data: dict) -> bytes:
     qr = qrcode.QRCode(box_size=4, border=1)
     qr.add_data(str(sample_data))
@@ -42,7 +48,9 @@ def generate_qr(sample_data: dict) -> bytes:
     buf.seek(0)
     return buf
 
+# ===============================
 # Нормативы качества нефти
+# ===============================
 LIMITS = {
     "density_min": 700,
     "density_max": 1000,
@@ -79,15 +87,17 @@ def evaluate_sample(params):
         issues.append("Фракционный состав вне диапазона кипения")
 
     if len(issues) == 0:
-        decision = "Качество нефтепродуктов удовлетворительное"
+        decision = "ГОДНА"
     elif len(issues) <= 2:
-        decision = "Качество нефтепродуктов условно удовлетворительное"
+        decision = "УСЛОВНО ГОДНА"
     else:
-        decision = "Качество нефтепродуктов неудовлетворительное"
+        decision = "НЕГОДНА"
 
     return decision, issues
 
-# PDF генерация
+# ===============================
+# PDF протокол с reportlab
+# ===============================
 def create_pdf(sample_data, issues):
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
@@ -111,8 +121,10 @@ def create_pdf(sample_data, issues):
     buf.seek(0)
     return buf
 
+# ===============================
 # Streamlit UI
-st.title("ЛИС нефтебазы — полный контроль качества")
+# ===============================
+st.title("ЛИС нефтебазы — полный контроль качества с подсветкой")
 
 st.header("Ввод параметров пробы")
 train = st.text_input("Номер состава")
@@ -120,7 +132,8 @@ tank = st.text_input("Номер цистерны")
 total_tanks = st.number_input("Кол-во цистерн в составе", min_value=2)
 samples_count = calculate_samples(total_tanks)
 positions = get_sampling_positions(total_tanks)
-time_needed = calculate_analysis_time(samples_count)
+heavy_oil = st.checkbox("Тяжелая нефть")
+time_needed = calculate_analysis_time(samples_count, heavy_oil)
 st.info(f"Отобрать цистерн: {samples_count}\nНомера цистерн: {positions}\nВремя анализа: {time_needed} мин")
 
 sample_number = st.text_input("Номер пробы")
@@ -141,30 +154,19 @@ flash_point = st.number_input("Температура вспышки, K")
 boiling_point_min = st.number_input("Нижняя температура кипения, K")
 boiling_point_max = st.number_input("Верхняя температура кипения, K")
 
-# Создание и оценка проб
+# ===============================
+# Создание и оценка пробы
+# ===============================
 if st.button("Создать и оценить пробу"):
     required_fields = [
-    train,
-    tank,
-    sample_number,
-    product_name,
-    supplier,
-    batch,
-    operator,
-    density,
-    kinematic_viscosity,
-    dynamic_viscosity,
-    mass_fraction_of_water,
-    mechanical,
-    salt,
-    sulfur,
-    flash_point,
-    boiling_point_min,
-    boiling_point_max
-]
+        train, tank, sample_number, product_name, supplier, batch, operator,
+        density, kinematic_viscosity, dynamic_viscosity, mass_fraction_of_water,
+        mechanical, salt, sulfur, flash_point, boiling_point_min, boiling_point_max
+    ]
     if not all(required_fields):
-        st.error("Заполните все обязательные поля!")
+        st.error("Пожалуйста, заполните все обязательные поля!")
     else:
+        # Проверка уникальности вагона в составе
         existing = supabase.table("samples").select("id").eq("train_number", train).eq("tank_number", tank).execute()
         if existing.data and len(existing.data) > 0:
             st.warning("Эта комбинация состава и цистерны уже существует!")
@@ -209,35 +211,36 @@ if st.button("Создать и оценить пробу"):
             pdf_buf = create_pdf(sample_data, issues)
             st.download_button("Скачать PDF протокол", pdf_buf, file_name=f"Protocol_{sample_number}.pdf")
 
-            if decision == "Качество нефтепродуктов удовлетворительное":
-                st.success("Нефть соответствует требованиям")
-            elif decision == "Качество нефтепродуктов условно удовлетворительное":
-                st.warning("Есть отклонения, необходима доработка")
+            if decision == "ГОДНА":
+                st.success("✅ Нефть соответствует требованиям")
+            elif decision == "УСЛОВНО ГОДНА":
+                st.warning("⚠ Есть отклонения")
             else:
-                st.error("Качество нефтепродуктов не удовлетворяет требованиям ГОСТ")
+                st.error("❌ Нефть НЕГОДНА")
 
             if issues:
                 st.write("Причины отклонений:")
                 for i in issues:
                     st.write(f"- {i}")
 
+# ===============================
 # Авто-дэшборд с подсветкой
+# ===============================
 st.header("Дэшборд по пробам")
-
 all_samples = supabase.table("samples").select("*").execute()
 if all_samples.data:
     df = pd.DataFrame(all_samples.data)
     st.subheader("Таблица проб с подсветкой")
 
     def highlight_decision(val):
-        color = ''
-        if val == 'Качество нефтепродуктов удовлетворительно':
-            color = 'background-color: lightgreen'
-        elif val == 'Качество нефтепродуктов условно удовлетворительно':
-            color = 'background-color: yellow'
-        elif val == 'Качество нефтепродуктов неудовлетворительно':
-            color = 'background-color: tomato'
-        return color
+        if val == 'ГОДНА':
+            return 'background-color: lightgreen'
+        elif val == 'УСЛОВНО ГОДНА':
+            return 'background-color: yellow'
+        elif val == 'НЕГОДНА':
+            return 'background-color: tomato'
+        else:
+            return ''
 
     st.dataframe(df.style.applymap(lambda x: highlight_decision(x) if x in ['ГОДНА','УСЛОВНО ГОДНА','НЕГОДНА'] else '', subset=['decision']))
 
