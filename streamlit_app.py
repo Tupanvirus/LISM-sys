@@ -160,8 +160,6 @@ if st.button("Создать и оценить пробу"):
                 "issues": ", ".join(issues),
                 "date": datetime.now().isoformat()
             }
-            st.session_state.sample_data = sample_data
-            st.session_state.issues = issues
             # Сохраняем в Supabase
             supabase.table("samples").insert(sample_data).execute()
 
