@@ -90,14 +90,14 @@ def create_pdf_html(sample_data, issues):
     return pdf_bytes
 
 # UI Streamlit
-st.title("ЛИС нефтебазы — проверка качества нефти для Streamlit Cloud")
+st.title("ЛИС для нефтебазы")
 
 # Ввод параметров
-train = st.text_input("Номер состава")
-tank = st.text_input("Номер цистерны")
+train = st.text_input("Номер состава", help = "Вводите номер из 4 цифр")
+tank = st.text_input("Номер цистерны", help = "Вводите номер из 8 цифр, первая цифра - 7")
 sample_number = st.text_input("Номер пробы")
-product_name = st.text_input("Наименование продукта")
-supplier = st.text_input("Поставщик")
+product_name = st.text_input("Наименование продукта",help= "Указывайте в таком виде:[Тип продукта] + [Марка/Характеристика] + [Нормативный документ (ГОСТ/ТУ)] \n Например:Топливо реактивное ТС-1")
+supplier = st.text_input("Поставщик", help= "Укажите название организации")
 batch = st.text_input("Номер партии")
 operator = st.text_input("ФИО отборщика")
 
