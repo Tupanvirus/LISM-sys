@@ -93,8 +93,7 @@ if st.button("Создать пробу"):
 
             # Вставка в Supabase
             response = supabase.table("samples").insert(sample_data).execute()
-                #Генерация QR
-                qr_buf = generate_qr(sample_data)
-                st.image(qr_buf, caption="QR для пробы")
-                st.download_button("Скачать QR", qr_buf, file_name=f"QR_{sample_number}.png")
-                st.success("Проба сохранена в Supabase и QR сгенерирован")
+            qr_buf = generate_qr(sample_data)
+            st.image(qr_buf, caption="QR для пробы")
+            st.download_button("Скачать QR", qr_buf, file_name=f"QR_{sample_number}.png")
+            st.success("Проба сохранена в Supabase и QR сгенерирован")
