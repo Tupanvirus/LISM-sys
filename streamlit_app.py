@@ -72,28 +72,6 @@ def generate_qr(sample_data: dict) -> bytes:
     buf.seek(0)
     return buf
 
-# PDF через pdfkit (HTML)
-def create_pdf_html(sample_data, issues):
-    html = f"""
-    <h2>Протокол лабораторного анализа нефти</h2>
-    <p><strong>Дата:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
-    <ul>
-    """
-    for k, v in sample_data.items():
-        if k != "issues":
-            html += f"<li><strong>{k}:</strong> {v}</li>"
-    if issues:
-        html += "<li><strong>Причины отклонений:</strong><ul>"
-        for issue in issues:
-            html += f"<li>{issue}</li>"
-        html += "</ul></li>"
-    html += "</ul>"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
-        pdfkit.from_string(html, f.name)
-        f.seek(0)
-        pdf_bytes = f.read()
-    return pdf_bytes
-
 # UI Streamlit
 st.title("ЛИС для нефтебазы")
 
