@@ -93,9 +93,6 @@ if st.button("Создать пробу"):
 
             # Вставка в Supabase
             response = supabase.table("samples").insert(sample_data).execute()
-            if response.status_code != 201 and response.status_code != 200:
-                st.error(f"Ошибка сохранения в Supabase: {response.data}")
-            else:
                 #Генерация QR
                 qr_buf = generate_qr(sample_data)
                 st.image(qr_buf, caption="QR для пробы")
