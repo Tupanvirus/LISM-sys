@@ -4,7 +4,8 @@ from supabase import create_client, Client
 import qrcode
 import io
 import pandas as pd
-from fpdf import FPDF
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 import math
 
 # API Supabase
@@ -88,22 +89,25 @@ def evaluate_sample(params):
 
 # PDF генерация
 def create_pdf(sample_data, issues):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "Протокол лабораторного анализа нефти", ln=True, align="C")
-    pdf.ln(5)
-    pdf.set_font("Arial", '', 12)
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    width, height = A4
+    c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(width / 2, height - 50, "Протокол лабораторного анализа нефти")
+    c.setFont("Helvetica", 12)
+    y = height - 80
     for key, value in sample_data.items():
         if key != "issues":
-            pdf.cell(0, 8, f"{key}: {value}", ln=True)
+            c.drawString(50, y, f"{key}: {value}")
+            y -= 20
     if issues:
-        pdf.ln(5)
-        pdf.cell(0, 8, "Причины отклонений:", ln=True)
-        for i in issues:
-            pdf.cell(0, 6, f"- {i}", ln=True)
-    buf = io.BytesIO()
-    pdf.output(buf)
+        c.drawString(50, y, "Причины отклонений:")
+        y -= 20
+        for issue in issues:
+            c.drawString(70, y, f"- {issue}")
+            y -= 15
+    c.showPage()
+    c.save()
     buf.seek(0)
     return buf
 
