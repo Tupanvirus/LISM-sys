@@ -5,7 +5,12 @@ import qrcode
 import io
 import tempfile
 from fpdf import FPDF
+# деактивация session.state
+if "sample_data" not in st.session_state:
+    st.session_state["sample_data"] = None
 
+if "issues" not in st.session_state:
+    st.session_state["issues"] = []
 # Настройки Supabase
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -166,17 +171,17 @@ if st.button("Создать и оценить пробу"):
             st.download_button("Скачать QR", qr_buf, file_name=f"QR_{sample_number}.png")
 
             # PDF
-if st.session_state.sample_data:
+if st.session_state.get("sample_data"):
     if st.button("Сгенерировать PDF"):
         pdf = create_pdf_bytes(
-            st.session_state.sample_data,
-            st.session_state.issues
+            st.session_state["sample_data"],
+            st.session_state["issues"]
         )
 
         st.download_button(
             "Скачать PDF",
             pdf,
-            file_name=f"protocol_{st.session_state.sample_data['sample_number']}.pdf",
+            file_name=f"protocol_{st.session_state['sample_data']['sample_number']}.pdf",
             mime="application/pdf"
         )
 # Дэшборд
