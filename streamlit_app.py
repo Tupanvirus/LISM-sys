@@ -167,16 +167,27 @@ if st.button("Создать и оценить пробу"):
             # PDF
 def create_pdf_bytes(sample_data, issues):
     pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, f"Протокол пробы №{sample_data['sample_number']}", ln=True)
-    pdf.set_font("Arial", "", 12)
-    for k, v in sample_data.items():
-        pdf.cell(0, 8, f"{k}: {v}", ln=True)
-    pdf.cell(0, 8, f"Проблемы: {issues}", ln=True)
+    pdf.add_page() 
+    pdf.set_font("Arial", "B", 16) #Заголовок
+    pdf.cell(0, 10, f"Протокол пробы №{sample_data.get('sample_number','')}", ln=True, align="C")
+    pdf.ln(5)
+    pdf.set_font("Arial", "", 12)# Данные пробы
+    for key, value in sample_data.items():
+        pdf.multi_cell(0, 8, f"{key}: {value}")
+    # Проблемы / отклонения
+    if issues:
+        pdf.ln(5)
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 8, "Обнаруженные проблемы / отклонения:", ln=True)
+        pdf.set_font("Arial", "", 12)
+        for issue in issues:
+            pdf.multi_cell(0, 8, f"- {issue}")
+    # Сохраняем в байтовый буфер
     buf = io.BytesIO()
-    pdf.output(buf)
+    pdf_output = pdf.output(dest='S').encode('latin1')  # dest='S' возвращает PDF как строку
+    buf.write(pdf_output)
     buf.seek(0)
+
     return buf
 
 # Дэшборд
