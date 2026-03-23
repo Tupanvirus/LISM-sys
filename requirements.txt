@@ -1,8 +1,6 @@
 streamlit==1.28.0
 pandas==2.1.0
-supabase==1.0.0
-fpdf==1.7.2
-qrcode==7.4.2
 numpy==1.26.0
-datetime
-
+supabase-py==1.0.0
+fpdf2==2.7.0
+qrcode[pil]==7.4.2
